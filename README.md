@@ -35,7 +35,7 @@ python -m pip install -U pymobiledevice3
 
 ## 准备 GPX
 
-项目中已有南区田径场 800m 路径，如需要其他路径可按以下说明自行创建。
+项目中已有南区田径场 800m 路径在 `./examples` 路径下，如需要其他路径可按以下说明自行创建。
 
 GPX 需要包含 `<trkpt>` 和递增的 `<time>`。可使用 [gpx.studio](https://gpx.studio/app) 规划路线并按固定速度生成时间。
 
@@ -50,8 +50,10 @@ python densify_gpx.py "输入路线.gpx" --interval 1
 如需在轨迹上加入连续、低幅度的 GPS 漂移，同时保持时间戳不变：
 
 ```powershell
-python realistic_gpx.py "输入路线.gpx" --max-offset 1.5 --correlation 9
+python realistic_gpx.py "输入路线.gpx" --max-offset 2 --correlation 9
 ```
+
+默认输出文件名为 `输入路线-realistic.gpx`；`--max-offset 2` 表示最多偏移 2m，`--correlation` 越大，偏移点越少。
 
 ## 运行
 

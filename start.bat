@@ -41,4 +41,6 @@ rem 将引号内的 gpx 文件路径修改为你需要使用的 gpx 文件路径。
 rem ============================================================
 
 call C:\ProgramData\miniconda3\Scripts\activate.bat ios-device
-python main.py "南区田径场800m-4m24s-realistic.gpx"
+python realistic_gpx.py "./examples/南区田径场800m-4m22s-smooth.gpx" -o "./examples/南区田径场800m-4m22s-smooth-realistic.gpx" --max-offset 2.5 --correlation 8
+python main.py "./examples/南区田径场800m-4m22s-smooth-realistic.gpx"
+pause

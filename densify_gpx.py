@@ -67,10 +67,10 @@ def create_trackpoint(
 def densify_segment(
     segment: ET.Element,
     interval_seconds: float,
-) -> tuple[int, int]:
+) -> tuple[int, int, int]:
     trackpoints = [child for child in segment if split_xml_tag(child.tag)[1] == "trkpt"]
     if len(trackpoints) < 2:
-        return 0, len(trackpoints)
+        return 0, len(trackpoints), 0
 
     namespace, _ = split_xml_tag(trackpoints[0].tag)
     time_tag = f"{{{namespace}}}time" if namespace else "time"
@@ -78,25 +78,40 @@ def densify_segment(
 
     new_points: list[ET.Element] = [copy.deepcopy(trackpoints[0])]
     inserted_count = 0
+    duplicate_count = 0
+    previous = trackpoints[0]
 
-    for start, end in zip(trackpoints, trackpoints[1:]):
-        start_latitude = parse_float(start.get("lat"))
-        start_longitude = parse_float(start.get("lon"))
+    for point_index, end in enumerate(trackpoints[1:], start=1):
+        start_latitude = parse_float(previous.get("lat"))
+        start_longitude = parse_float(previous.get("lon"))
         end_latitude = parse_float(end.get("lat"))
         end_longitude = parse_float(end.get("lon"))
-        start_time = parse_time(start.findtext(time_tag))
+        start_time = parse_time(previous.findtext(time_tag))
         end_time = parse_time(end.findtext(time_tag))
 
         if None in (start_latitude, start_longitude, end_latitude, end_longitude):
             raise ValueError("track point has an invalid latitude or longitude")
-        if end_time <= start_time:
+        if end_time == start_time:
+            same_coordinates = (
+                previous.get("lat") == end.get("lat")
+                and previous.get("lon") == end.get("lon")
+            )
+            if same_coordinates:
+                duplicate_count += 1
+                continue
             raise ValueError(
-                f"timestamps must increase: {format_time(start_time)} -> {format_time(end_time)}"
+                f"point {point_index} has the same timestamp as the previous point "
+                "but different coordinates"
+            )
+        if end_time < start_time:
+            raise ValueError(
+                f"timestamps go backwards at point {point_index}: "
+                f"{format_time(start_time)} -> {format_time(end_time)}"
             )
 
         duration = (end_time - start_time).total_seconds()
         steps = max(1, math.ceil(duration / interval_seconds))
-        start_elevation = parse_float(start.findtext(elevation_tag))
+        start_elevation = parse_float(previous.findtext(elevation_tag))
         end_elevation = parse_float(end.findtext(elevation_tag))
 
         for step in range(1, steps):
@@ -110,7 +125,7 @@ def densify_segment(
 
             new_points.append(
                 create_trackpoint(
-                    template=start,
+                    template=previous,
                     latitude=latitude,
                     longitude=longitude,
                     timestamp=timestamp,
@@ -121,12 +136,17 @@ def densify_segment(
             inserted_count += 1
 
         new_points.append(copy.deepcopy(end))
+        previous = end
 
     segment[:] = new_points
-    return inserted_count, len(new_points)
+    return inserted_count, len(new_points), duplicate_count
 
 
-def densify_gpx(input_path: Path, output_path: Path, interval_seconds: float) -> tuple[int, int]:
+def densify_gpx(
+    input_path: Path,
+    output_path: Path,
+    interval_seconds: float,
+) -> tuple[int, int, int]:
     if not input_path.is_file():
         raise FileNotFoundError(f"input GPX not found: {input_path}")
     if interval_seconds <= 0:
@@ -146,15 +166,17 @@ def densify_gpx(input_path: Path, output_path: Path, interval_seconds: float) ->
 
     inserted_total = 0
     point_total = 0
+    duplicate_total = 0
     for segment in segments:
-        inserted, points = densify_segment(segment, interval_seconds)
+        inserted, points, duplicates = densify_segment(segment, interval_seconds)
         inserted_total += inserted
         point_total += points
+        duplicate_total += duplicates
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     ET.indent(tree, space="  ")
     tree.write(output_path, encoding="utf-8", xml_declaration=True)
-    return inserted_total, point_total
+    return inserted_total, point_total, duplicate_total
 
 
 def positive_float(value: str) -> float:
@@ -188,8 +210,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     output = args.output or args.input.with_name(f"{args.input.stem}-smooth{args.input.suffix}")
-    inserted, total = densify_gpx(args.input, output, args.interval)
-    print(f"Inserted {inserted} points; output contains {total} points.")
+    inserted, total, duplicates = densify_gpx(args.input, output, args.interval)
+    print(
+        f"Removed {duplicates} duplicate points; inserted {inserted} points; "
+        f"output contains {total} points."
+    )
     print(f"Saved to: {output}")
 
 
