@@ -32,13 +32,13 @@ rem    注释或删除下方的 Conda activate 命令，使脚本直接调用
 rem    系统级 python。需要恢复 Conda 时再取消该行注释。
 rem 3. 如果使用 Anaconda Prompt、venv 或其他 Python 环境，
 rem    可以先手动激活环境，再单独运行：
-rem      python main.py "南区田径场800m-smooth.gpx"
+rem      python main.py "*.gpx"
 rem 4. macOS/Linux 不能直接运行 .bat，需要在终端激活 Conda 后执行：
-rem      python main.py "南区田径场800m-smooth.gpx"
+rem      python main.py "*.gpx"
 rem
 rem GPX 文件:
 rem 将引号内的 gpx 文件路径修改为你需要使用的 gpx 文件路径。
 rem ============================================================
 
 call C:\ProgramData\miniconda3\Scripts\activate.bat ios-device
-python main.py "南区田径场800m-4m24s-smooth.gpx"
+python main.py "南区田径场800m-4m24s-realistic.gpx"

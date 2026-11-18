@@ -47,6 +47,12 @@ python densify_gpx.py "输入路线.gpx" --interval 1
 
 默认输出文件名为 `输入路线-smooth.gpx`；`--interval 1` 表示相邻点最多间隔 1 秒。
 
+如需在轨迹上加入连续、低幅度的 GPS 漂移，同时保持时间戳不变：
+
+```powershell
+python realistic_gpx.py "输入路线.gpx" --max-offset 1.5 --correlation 9
+```
+
 ## 运行
 
 Windows 下，运行 `start.bat`
@@ -62,8 +68,9 @@ python main.py "你的gpx文件.gpx"
 
 - `main.py`：连接 iPhone 并回放 GPX
 - `densify_gpx.py`：加密 GPX 轨迹点
+- `realistic_gpx.py`：为轨迹加入连续低幅 GPS 漂移
 - `start.bat`：Windows 快速启动脚本
-- `南区田径场800m-smooth.gpx`：示例路线
+- `南区田径场800m-4m24s-realistic.gpx`：调整后的示例路线
 
 ## 常见问题
 
