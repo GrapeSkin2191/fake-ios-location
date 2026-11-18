@@ -1,5 +1,7 @@
 import argparse
 import asyncio
+import os
+import sys
 import xml.etree.ElementTree as ET
 from contextlib import suppress
 from pathlib import Path
@@ -27,6 +29,29 @@ def validate_point(latitude: float, longitude: float) -> None:
         raise ValueError("longitude must be between -180 and 180")
 
 
+async def wait_for_enter(prompt: str) -> None:
+    print(prompt, flush=True)
+
+    # Polling the Windows console keeps the event loop responsive, so Ctrl+C
+    # can cancel the wait and the location session can still be cleared.
+    if os.name == "nt" and sys.stdin.isatty():
+        import msvcrt
+
+        while True:
+            await asyncio.sleep(0.05)
+            if not msvcrt.kbhit():
+                continue
+
+            key = msvcrt.getwch()
+            if key == "\x03":
+                raise KeyboardInterrupt
+            if key in ("\r", "\n"):
+                print(flush=True)
+                return
+
+    await asyncio.to_thread(input)
+
+
 async def follow_gpx(gpx_file: Path, initial_point: tuple[float, float]) -> None:
     if not gpx_file.is_file():
         raise FileNotFoundError(f"GPX file not found: {gpx_file}")
@@ -45,17 +70,19 @@ async def follow_gpx(gpx_file: Path, initial_point: tuple[float, float]) -> None
                         f"Fixed location: {latitude:.6f}, {longitude:.6f}",
                         flush=True,
                     )
-                    print("按 Enter 开始按路线移动，按 Ctrl+C 退出。", flush=True)
-
-                    # Keep the event loop running while waiting for input so the
-                    # userspace tunnel and location session remain active.
-                    await asyncio.to_thread(input)
+                    await wait_for_enter(
+                        "按 Enter 开始按路线移动，按 Ctrl+C 随时退出。"
+                    )
 
                     print("开始移动。", flush=True)
                     await location.play_gpx_file(
                         str(gpx_file),
                         timing_randomness_range=0,
                         disable_sleep=False,
+                    )
+                    await wait_for_enter(
+                        "路线移动完成，定位将固定在最后一个点。"
+                        "按 Enter 结束并恢复真实定位，按 Ctrl+C 随时退出。"
                     )
                 finally:
                     # Passing Ctrl+C still restores the device's real location.
@@ -70,18 +97,11 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="GPX file to play",
     )
-    parser.add_argument(
-        "--start",
-        nargs=2,
-        type=float,
-        metavar=("LAT", "LON"),
-        help="fixed waiting point; defaults to the first GPX track point",
-    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    initial_point = tuple(args.start) if args.start else first_gpx_point(args.gpx_file)
+    initial_point = first_gpx_point(args.gpx_file)
     validate_point(*initial_point)
     asyncio.run(follow_gpx(args.gpx_file, initial_point))
