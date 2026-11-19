@@ -72,7 +72,7 @@ python main.py "你的gpx文件.gpx"
 - `densify_gpx.py`：加密 GPX 轨迹点
 - `realistic_gpx.py`：为轨迹加入连续低幅 GPS 漂移
 - `start.bat`：Windows 快速启动脚本
-- `南区田径场800m-4m24s-realistic.gpx`：调整后的示例路线
+- `./example`：示例路线
 
 ## 常见问题
 
