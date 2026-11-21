@@ -14,6 +14,22 @@
 - iTunes 或 Apple Devices
 - iPhone 已解锁、信任电脑并开启开发者模式
 
+如果要在不打开 Apple Devices 的情况下通过 Wi-Fi 运行，需要先通过 USB
+完成一次 RemotePairing 初始化：
+
+```powershell
+python -m pymobiledevice3 lockdown remotepairing --pair --udid 你的设备UDID
+```
+
+完成后可拔掉 USB，并指定手机在当前局域网中的 IPv4 地址运行（可以用下面的语句替换启动脚本中的对应语句）：
+
+```powershell
+python main.py "你的gpx文件.gpx" --wireless --udid 你的设备UDID --wireless-host 192.168.1.113
+```
+
+也可以省略 `--wireless-host`，让程序通过 Bonjour 自动发现手机。存在 VPN
+虚拟网卡时建议明确指定局域网 IPv4 地址，避免连接到虚拟网卡公布的地址。
+
 ## 安装
 
 使用 Conda：
@@ -78,6 +94,8 @@ python main.py "你的gpx文件.gpx"
 
 - 提示 userspace tunnel：属于正常信息，继续等待连接完成。
 - 手机无法识别：检查 USB 线、Apple 驱动、解锁状态和设备信任。
+- Wi-Fi 提示 RemotePairing 连接失败：确认已完成一次 USB
+  `lockdown remotepairing --pair`，并尝试用 `--wireless-host` 指定手机 IP。
 - GPX 没有轨迹点：确保使用 `<trkpt>`，不是只有 `<rtept>`。
 - 移动仍跳点：使用 `densify_gpx.py` 减小点的时间间隔。
 - 速度不正确：检查 GPX 时间戳是否完整、递增并按固定速度生成。
