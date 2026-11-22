@@ -1,34 +1,21 @@
 # iOS GPX 虚拟定位路线回放
 
 通过 `pymobiledevice3` 将连接的 iPhone 设置到指定位置，并按照 GPX 轨迹和时间戳移动。
-启动后先进入固定等待点，按 Enter 开始移动；路线完成后固定在最后一点，再按 Enter 结束并恢复真实定位。按 `Ctrl+C` 可随时退出。
-
-自带南区田径场路径（2 圈，即 800 米），可用于刷锻！
 
 本项目由 Codex (powered by Deepseek) 协助完成。
 
+路线模拟功能的使用具体说明见 [README_GPX.md](./README_GPX.md)。
+
 ## 环境要求
 
-- Windows 10/11、iOS 17+
-- Python 3.13
+- Windows 10/11、iOS 17+（Mac 理论可行，但未经测试）
+- Python 3.13（其他 Python 版本也可行，但未经测试，可能需要调整代码）
 - iTunes 或 Apple Devices
 - iPhone 已解锁、信任电脑并开启开发者模式
 
-如果要在不打开 Apple Devices 的情况下通过 Wi-Fi 运行，需要先通过 USB
-完成一次 RemotePairing 初始化：
+默认需要使用数据线连接手机和电脑。
 
-```powershell
-python -m pymobiledevice3 lockdown remotepairing --pair --udid 你的设备UDID
-```
-
-完成后可拔掉 USB，并指定手机在当前局域网中的 IPv4 地址运行（可以用下面的语句替换启动脚本中的对应语句）：
-
-```powershell
-python main.py "你的gpx文件.gpx" --wireless --udid 你的设备UDID --wireless-host 192.168.1.113
-```
-
-也可以省略 `--wireless-host`，让程序通过 Bonjour 自动发现手机。存在 VPN
-虚拟网卡时建议明确指定局域网 IPv4 地址，避免连接到虚拟网卡公布的地址。
+也可以通过 Wi-Fi 连接，见 [使用 Wi-Fi 连接](#使用-wi-fi-连接)
 
 ## 安装
 
@@ -49,46 +36,32 @@ python --version
 python -m pip install -U pymobiledevice3
 ```
 
-## 准备 GPX
+## 使用 Wi-Fi 连接
 
-项目中已有南区田径场 800m 路径在 `./examples` 路径下，如需要其他路径可按以下说明自行创建。
-
-GPX 需要包含 `<trkpt>` 和递增的 `<time>`。可使用 [gpx.studio](https://gpx.studio/app) 规划路线并按固定速度生成时间。
-
-轨迹点太少时会跳点，可使用项目中的脚本加密：
+如果要在不打开 Apple Devices 的情况下通过 Wi-Fi 运行，需要先通过 USB
+完成一次 RemotePairing 初始化：
 
 ```powershell
-python densify_gpx.py "输入路线.gpx" --interval 1
+python -m pymobiledevice3 lockdown remotepairing --pair --udid 你的设备UDID
 ```
 
-默认输出文件名为 `输入路线-smooth.gpx`；`--interval 1` 表示相邻点最多间隔 1 秒。
-
-如需在轨迹上加入连续、低幅度的 GPS 漂移，同时保持时间戳不变：
+完成后可拔掉 USB，并指定手机在当前局域网中的 IPv4 地址运行（可以用下面的语句替换启动脚本中的对应语句）：
 
 ```powershell
-python realistic_gpx.py "输入路线.gpx" --max-offset 2 --correlation 9
+python run_gpx.py "你的gpx文件.gpx" --wireless --udid 你的设备UDID --wireless-host 192.168.1.113
 ```
 
-默认输出文件名为 `输入路线-realistic.gpx`；`--max-offset 2` 表示最多偏移 2m，`--correlation` 越大，偏移点越少。
-
-## 运行
-
-Windows 下，运行 `start.bat`
-（需要先调整 bat 中的 python 路径和 gpx 文件路径，见 bat 文件中注释）；
-
-或直接运行（确保你调用的 `python` 有正确的环境）：
-
-```powershell
-python main.py "你的gpx文件.gpx"
-```
+也可以省略 `--wireless-host`，让程序通过 Bonjour 自动发现手机。存在 VPN
+虚拟网卡时建议明确指定局域网 IPv4 地址，避免连接到虚拟网卡公布的地址。
 
 ## 文件
 
-- `main.py`：连接 iPhone 并回放 GPX
+- `run_gpx.py`：连接 iPhone 并回放 GPX
 - `densify_gpx.py`：加密 GPX 轨迹点
 - `realistic_gpx.py`：为轨迹加入连续低幅 GPS 漂移
-- `start.bat`：Windows 快速启动脚本
-- `./example`：示例路线
+- `start_gpx.bat`：路线模拟 Windows 快速启动脚本
+- `./examples`：示例路线
+- `README_GPX.md`：GPX 路线模拟详细说明
 
 ## 常见问题
 
@@ -96,6 +69,5 @@ python main.py "你的gpx文件.gpx"
 - 手机无法识别：检查 USB 线、Apple 驱动、解锁状态和设备信任。
 - Wi-Fi 提示 RemotePairing 连接失败：确认已完成一次 USB
   `lockdown remotepairing --pair`，并尝试用 `--wireless-host` 指定手机 IP。
-- GPX 没有轨迹点：确保使用 `<trkpt>`，不是只有 `<rtept>`。
-- 移动仍跳点：使用 `densify_gpx.py` 减小点的时间间隔。
-- 速度不正确：检查 GPX 时间戳是否完整、递增并按固定速度生成。
+
+路线和 GPX 相关的问题见 [README_GPX.md](./README_GPX.md#常见问题)。

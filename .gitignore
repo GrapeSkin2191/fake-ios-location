@@ -222,5 +222,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-/start_local_only.bat
+/start_gpx_local_only.bat
 examples/*-realistic.gpx
