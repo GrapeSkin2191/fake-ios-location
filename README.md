@@ -1,6 +1,6 @@
-# iOS GPX 虚拟定位路线回放
+# iOS 虚拟定位
 
-通过 `pymobiledevice3` 将连接的 iPhone 设置到指定位置，并按照 GPX 轨迹和时间戳移动。
+通过 `pymobiledevice3` 将连接的 iPhone 设置到指定位置，包括路线模拟功能。
 
 本项目由 Codex (powered by Deepseek) 协助完成。
 
